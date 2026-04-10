@@ -8,6 +8,13 @@ type Profile = Pick<
   "email" | "full_name" | "phone" | "progress_step" | "score"
 >;
 
+type RankingProfile = Pick<
+  Tables<"profiles">,
+  "id" | "full_name" | "phone" | "score"
+>;
+
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const supabase = await createClient();
   const {
@@ -15,6 +22,7 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   let profile: Profile | null = null;
+  let rankingProfiles: RankingProfile[] = [];
 
   if (user) {
     const { data } = await supabase
@@ -24,7 +32,23 @@ export default async function Home() {
       .maybeSingle();
 
     profile = data;
+
+    // Fetch ranking data
+    const { data: ranking } = await supabase
+      .from("profiles")
+      .select("id, full_name, phone, score")
+      .order("score", { ascending: false });
+
+    rankingProfiles = ranking ?? [];
   }
 
-  return <main>{!profile ? <AuthPanel /> : <GameShell profile={profile} />}</main>;
+  return (
+    <main>
+      {!profile ? (
+        <AuthPanel />
+      ) : (
+        <GameShell profile={profile} rankingProfiles={rankingProfiles} currentUserId={user?.id} />
+      )}
+    </main>
+  );
 }

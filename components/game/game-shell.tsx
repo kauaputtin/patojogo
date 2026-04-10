@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { AppMark } from "@/components/auth/app-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { RankingTab } from "@/components/game/ranking-tab";
 import { cn } from "@/lib/cn";
+import type { Tables } from "@/lib/database.types";
 
 type Profile = {
   email: string | null;
@@ -13,8 +15,15 @@ type Profile = {
   score: number | null;
 };
 
+type RankingProfile = Pick<
+  Tables<"profiles">,
+  "id" | "full_name" | "phone" | "score"
+>;
+
 type GameShellProps = {
   profile: Profile;
+  rankingProfiles?: RankingProfile[];
+  currentUserId?: string;
 };
 
 type TabId = "extras" | "shop" | "play" | "ranking" | "account";
@@ -70,7 +79,7 @@ const playModes = [
   },
 ];
 
-export function GameShell({ profile }: GameShellProps) {
+export function GameShell({ profile, rankingProfiles = [], currentUserId }: GameShellProps) {
   const [activeTab, setActiveTab] = useState<TabId>("play");
   const activeItem = navItems.find((item) => item.id === activeTab) ?? navItems[2];
   const firstName = profile.full_name?.split(" ")[0] ?? "Participante";
@@ -111,6 +120,11 @@ export function GameShell({ profile }: GameShellProps) {
         <main className="flex flex-1 flex-col pt-4 pb-24 sm:pt-5 sm:pb-28">
           {activeTab === "play" ? (
             <PlayHub progressStep={profile.progress_step ?? 0} />
+          ) : activeTab === "ranking" ? (
+            <RankingTab
+              profiles={rankingProfiles ?? []}
+              currentUserId={currentUserId}
+            />
           ) : (
             <BlankTab label={activeItem.label} />
           )}
